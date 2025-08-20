@@ -1,0 +1,81 @@
+	int radix;
+	int di, bi;
+	int divfac = 1;
+	Que p_buckets[10];
+	Que m_buckets[10];
+	int maxdigits = 1;
+	int mx = 0;
+	int tmp;
+
+	for (int i = 0; i < num; i++)
+	{
+		if (arr[i] < 0)
+			tmp = arr[i] * -1;
+		else
+			tmp = arr[i];
+
+		if (tmp > mx)
+			mx = tmp;
+	}
+	while (mx >= 10)
+	{
+		mx /= 10;
+		maxdigits++;
+	}
+
+	for (bi = 0; bi < 10; bi++)
+	{
+		QueInit(&p_buckets[bi]);
+		QueInit(&m_buckets[bi]);
+	}
+
+	for (int i = 0; i < maxdigits; i++)
+	{
+		for (di = 0; di < num; di++)
+		{
+			if (arr[di] < 0)
+			{
+				radix = ((arr[di] * -1) / divfac) % 10;
+				enqueue(&m_buckets[radix], arr[di]);
+			}
+			else
+			{
+				radix = (arr[di] / divfac) % 10;
+				enqueue(&p_buckets[radix], arr[di]);
+			}
+		}
+
+		for (bi = 0, di = 0; bi < 10; bi++)
+		{
+			while (m_buckets[bi].head != NULL)
+			{
+				arr[di++] = dequeue(&m_buckets[bi]);
+			}
+		}
+		for (bi = 0; bi < 10; bi++)
+		{
+			while (p_buckets[bi].head != NULL)
+			{
+				arr[di++] = dequeue(&p_buckets[bi]);
+			}
+		}
+		
+		divfac *= 10;
+	}
+
+	int head, rear;
+	head = 0;
+	rear = 0;
+	while (arr[rear] < 0 && rear <= num)
+	{
+		rear++;
+	}
+	rear--;
+	while (head < rear)
+	{
+		tmp = arr[head];
+		arr[head] = arr[rear];
+		arr[rear] = tmp;
+
+		head++, rear--;
+	}
