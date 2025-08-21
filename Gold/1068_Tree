@@ -1,0 +1,142 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct _treenode														// 왼쪽 자식-오른쪽 형제 기반 트리 노드 구조체
+{
+	struct _treenode* parent;
+	struct _treenode* lChild;
+	struct _treenode* sibling;
+	int node_num;
+} treeNode;
+
+typedef struct _tree															// 트리 구조체 선언
+{
+	treeNode* root;
+	int numOfLeaf;
+} Tree;
+
+void tInit(Tree* pt);															
+treeNode* search(treeNode* pt, int num);										// 깊이 우선 순회
+void findLeaf(treeNode* node, Tree* pt);										// 리프 노드 개수 파악
+void tRemove(Tree* pt, int num);
+void subtreeFree(treeNode* node);
+
+int main(void)
+{
+	Tree pt;
+	tInit(&pt);
+
+	int tree_num, delete_node;
+
+	scanf("%d", &tree_num);
+	int* parents = (int*)malloc(sizeof(int) * tree_num);						// 각 노드들의 부모를 파악하기 위한 배열
+	treeNode** node = (treeNode**)malloc(sizeof(treeNode*) * tree_num);			// 노드 포인터들을 모두 받기 위한 배열
+	for (int i = 0; i < tree_num; i++)											// 노드 포인터 배열을 활용해 모든 노드 데이터 파악
+	{
+		scanf("%d", &parents[i]);
+		node[i] = (treeNode*)malloc(sizeof(treeNode));
+		node[i]->node_num = i;
+		node[i]->parent = NULL;
+		node[i]->lChild = NULL;
+		node[i]->sibling = NULL;
+	}
+	
+	for (int i = 0; i < tree_num; i++)											// 파악된 노드를 활용해 트리 구성
+	{
+		if (parents[i] == -1)													// 부모 노드가 -1이라면 루트 노드
+			pt.root = node[i];
+		else																	// 해당하는 부모 노드와 연결
+		{
+			treeNode* move = node[parents[i]]->lChild;							// 현재 인덱스의 노드를 연결하기 위한 move 노드
+			node[i]->parent = node[parents[i]];									// 먼저 부모 노드와 연결
+			if (move == NULL)													// move가 NULL이라면 부모 노드에게 자식이 하나도 없다는 뜻
+				node[parents[i]]->lChild = node[i];
+			else																// move가 NULL이 아니므로 부모 노드에 자식이 있다는 뜻
+			{
+				while (move->sibling != NULL)									// 형제 노드 중 마지막 노드를 탐색
+					move = move->sibling;
+
+				move->sibling = node[i];
+			}
+		}
+	}
+		
+	scanf("%d", &delete_node);													// 삭제할 노드 파악
+	tRemove(&pt, delete_node);
+
+	findLeaf(pt.root, &pt);
+	printf("%d", pt.numOfLeaf);
+
+	return 0;
+	
+}
+
+void tInit(Tree* pt)
+{
+	pt->root = NULL;
+	pt->numOfLeaf = 0;
+}
+treeNode* search(treeNode* node, int num)
+{
+	if (node == NULL)															// 현 노드가 NULL이라면 NULL로 종료
+		return NULL;
+	if (node->node_num == num)													// 내가 찾은 노드가 맞다면 해당 노드 반환
+		return node;
+
+	treeNode* result = search(node->lChild, num);
+
+	if (result != NULL)															// 자식 노드에서 찾았을 경우, 결과 반환
+		return result;
+
+	return search(node->sibling, num);											// 자식 노드에서 찾지 못했을 경우, 형제 노드 탐색
+}
+void findLeaf(treeNode* node, Tree* pt)											// 리프 노드 개수 파악
+{
+	if (node == NULL)															// 빈 노드이므로 종료
+		return;
+
+	if (node->lChild == NULL)													// 빈 노드도 아니고, 자식 노드도 하나도 없다면 리프 노드
+		pt->numOfLeaf++;
+
+	findLeaf(node->lChild, pt);													// 왼쪽 자식 노드 탐색
+	findLeaf(node->sibling, pt);												// 오른쪽 형제 노드 탐색
+}
+void tRemove(Tree* pt, int num)
+{
+	treeNode* removeNode = search(pt->root, num);								// 삭제해야할 노드 저장
+	treeNode* removeLink = removeNode->parent;									// 삭제할 노드와 부모 간의 연결을 끊기 위해 부모 노드 저장
+
+	if (removeNode == pt->root)													// 삭제할 노드가 루트 노드일 경우
+	{
+		pt->root = NULL;
+	}
+	else if (removeLink->lChild == removeNode)									// 삭제할 노드가 부모 노드의 첫 번째 자식 노드일 경우
+	{
+		removeLink->lChild = removeLink->lChild->sibling;
+	}
+	else																		// 삭제할 노드가 부모 노드의 첫 번째 자식 노드가 아니므로 탐색 필요
+	{
+		removeLink = removeLink->lChild;										// 이제는 삭제할 노드와 형제 간의 연결을 끊어야 하므로 자식 노드로 다시 저장
+
+		while (removeLink->sibling != removeNode)								// 삭제할 노드가 나올 때까지 이동
+			removeLink = removeLink->sibling;
+		
+		if (removeLink->sibling->sibling != NULL)								// 삭제할 노드가 마지막 자식 노드가 아닐 경우
+			removeLink->sibling = removeLink->sibling->sibling;
+		else																	// 삭제할 노드가 마지막 자식 노드일 경우
+			removeLink->sibling = NULL;
+	}
+
+	subtreeFree(removeNode);													// 삭제할 노드부터 서브 트리 모두 할당 해제
+}
+void subtreeFree(treeNode* node)
+{
+	if (node == NULL)															// 빈 노드라면 반환
+		return;
+
+																				// 왼쪽 자식부터 오른쪽 형제까지 모두 할당 해제
+	subtreeFree(node->lChild);											
+	subtreeFree(node->sibling);
+	free(node);
+}
