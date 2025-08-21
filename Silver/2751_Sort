@@ -1,0 +1,167 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct _node
+{
+	int data;
+	struct _node* next;
+} Node;
+
+typedef struct _que
+{
+	Node* head;
+	Node* rear;
+} Que;
+															// 큐 활용
+void QueInit(Que* pq);                                  
+void enqueue(Que* pq, int data);
+int dequeue(Que* pq);
+void radixsort(int* arr, int num);
+
+int main(void)
+{
+	int* arr;
+	int N;
+
+	scanf("%d", &N);								
+	arr = (int*)malloc(sizeof(int) * N);
+	for (int i = 0; i < N; i++)
+	{
+		scanf("%d", &arr[i]);
+	}
+
+	radixsort(arr, N);
+
+	for (int i = 0; i < N; i++)
+	{
+		printf("%d\n", arr[i]);
+	}
+}
+
+void QueInit(Que* pq)
+{
+	pq->head = NULL;
+	pq->rear = NULL;
+}
+void enqueue(Que* pq, int data)
+{
+	Node* init = (Node*)malloc(sizeof(Node));
+	init->data = data;
+	init->next = NULL;
+
+	if (pq->head == NULL)
+		pq->head = init;
+	else
+		pq->rear->next = init;
+	
+	pq->rear = init;
+}
+int dequeue(Que* pq)
+{
+	if (pq->head == NULL)
+	{
+		printf("invalid!");
+		exit(-1);
+	}
+
+	Node* removeNode = pq->head;
+	int removeData = pq->head->data;
+
+	pq->head = pq->head->next;
+
+	if (pq->head == NULL)
+		pq->rear = NULL;
+
+	free(removeNode);
+	return removeData;
+}
+
+void radixsort(int* arr, int num)
+{
+	int radix;												// 현재 자리수 (0~9)
+	int di, bi;												// digit index, bucket index
+	int divfac = 1;											// 자리수 나눌 때 쓰는 값
+	Que p_buckets[10];										// 양수용 버킷
+	Que m_buckets[10];										// 음수용 버킷
+	
+	int maxdigits = 1;										// 전체에서 최대 자릿수
+	int mx = 0;												// 절댓값 중 최댓값
+	int tmp;
+
+
+	for (int i = 0; i < num; i++)							// 최대 자리수 계산
+	{
+		// 절대값 구하기
+		if (arr[i] < 0)
+			tmp = arr[i] * -1;
+		else
+			tmp = arr[i];
+
+		if (tmp > mx)
+			mx = tmp;
+	}
+	while (mx >= 10)
+	{
+		mx /= 10;
+		maxdigits++;
+	}
+
+		
+	for (bi = 0; bi < 10; bi++)								// 각 버킷 초기화
+	{
+		QueInit(&p_buckets[bi]);
+		QueInit(&m_buckets[bi]);
+	}
+
+	for (int i = 0; i < maxdigits; i++)						// 각 자리수마다 분배 및 수집 반복
+	{
+		for (di = 0; di < num; di++)						// 1) 분배 단계 (LSD부터 MSD 순서로)
+		{
+			if (arr[di] < 0)						
+			{
+				radix = ((arr[di] * -1) / divfac) % 10;		// 음수는 절대값으로 자릿수 구하기
+				enqueue(&m_buckets[radix], arr[di]);
+			}
+			else
+			{
+				radix = (arr[di] / divfac) % 10;			// 양수는 그대로 자릿수 구하기
+				enqueue(&p_buckets[radix], arr[di]);
+			}
+		}
+
+		for (bi = 0, di = 0; bi < 10; bi++)					// 2) 수집 단계
+		{
+			while (m_buckets[bi].head != NULL)				// 음수 버킷(0 -> 9 순서)
+			{
+				arr[di++] = dequeue(&m_buckets[bi]);
+			}
+		}
+		for (bi = 0; bi < 10; bi++)
+		{
+			while (p_buckets[bi].head != NULL)				// 양수 버킷 (0 -> 9 순서)
+			{
+				arr[di++] = dequeue(&p_buckets[bi]);
+			}
+		}
+		
+		divfac *= 10;										// 다음 자릿수로 이동 (LSD부터 MSD로)
+	}
+
+	int head, rear;											// 음수 구간 뒤집기
+	head = 0;
+	rear = 0;
+	while (arr[rear] < 0 && rear < num)						// 배열에서 음수 끝나는 인덱스 구하기
+	{
+		rear++;
+	}
+	rear--;
+	while (head < rear)										// 음수 구간 역순으로 뒤집기
+	{
+		tmp = arr[head];
+		arr[head] = arr[rear];
+		arr[rear] = tmp;
+
+		head++, rear--;
+	}
+}
