@@ -1,0 +1,118 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct _bTree															// 이진 트리 구조체 정의
+{
+	struct _bTree* left;
+	struct _bTree* right;
+	struct _bTree* parent;
+	char data;
+} bTree;
+
+bTree* search(bTree* bt, char parent);
+void makeNode(bTree* bt, char data);
+void bTreeInsert(bTree** bt, char parent, char lChild, char rChild);
+void preOrder(bTree* bt);
+void inOrder(bTree* bt);
+void postOrder(bTree* bt);
+
+int main(void)
+{
+	int node_num;
+	bTree** root = (bTree**)malloc(sizeof(bTree*));								// 트리의 루트 노드 선언
+	*root = NULL;
+	char parent, left, right;
+	
+	scanf("%d", &node_num);
+	for (int i = 0; i < node_num; i++)											// 노드 개수에 따른 부모, 자식들 값 입력
+	{
+		scanf(" %c %c %c", &parent, &left, &right);
+		bTreeInsert(root, parent, left, right);
+	}
+																				// 전위, 중위, 후위 순서로 순회하며 출력
+	preOrder(*root);
+	printf("\n");
+	inOrder(*root);
+	printf("\n");
+	postOrder(*root);
+
+	return 0;
+}
+
+bTree* search(bTree* bt, char parent)											// 트리에서 특정 값을 전위 순회 방식으로 탐색 함수
+{
+	if (bt == NULL)																// 빈 노드면 NULL 반환
+		return NULL;
+	if (bt->data == parent)														// 찾고자 하는 값 탐색 완료 시 반환
+		return bt;
+
+	bTree* result = search(bt->left, parent);									// 왼쪽 자식부터 탐색
+	if (result != NULL)
+		return result;
+
+	return search(bt->right, parent);											// 오른쪽 자식 탐색
+}
+void makeNode(bTree* bt, char data)												// 새로운 노드 생성
+{
+	bt->data = data;
+	bt->left = NULL;
+	bt->right = NULL;
+	bt->left = NULL;
+}
+void bTreeInsert(bTree** bt, char parent, char lChild, char rChild)				// 트리에 노드 삽입
+{
+	bTree* parentNode = search(*bt, parent);									// 부모 노드 탐색
+
+	if (parentNode == NULL)														// 빈 트리라면, 루트 노드로 입력
+	{
+		parentNode = (bTree*)malloc(sizeof(bTree));
+		makeNode(parentNode, parent);
+		*bt = parentNode;
+	}
+
+
+	bTree* leftNode = (bTree*)malloc(sizeof(bTree));							// 왼쪽 자식 노드 설정
+	makeNode(leftNode, lChild);
+	if (lChild == '.')
+	{
+		free(leftNode);
+		leftNode = NULL;
+
+	}
+
+	bTree* rightNode = (bTree*)malloc(sizeof(bTree));							// 오른쪽 자식 노드 설정
+	makeNode(rightNode, rChild);
+	if (rChild == '.')
+	{
+		free(rightNode);
+		rightNode = NULL;
+	}
+
+	parentNode->left = leftNode;
+	parentNode->right = rightNode;
+}
+void preOrder(bTree* bt)
+{
+	if (bt == NULL)
+		return;
+	printf("%c", bt->data);
+	preOrder(bt->left);
+	preOrder(bt->right);
+}
+void inOrder(bTree* bt)
+{
+	if (bt == NULL)
+		return;
+	inOrder(bt->left);
+	printf("%c", bt->data);
+	inOrder(bt->right);
+}
+void postOrder(bTree* bt)
+{
+	if (bt == NULL)
+		return;
+	postOrder(bt->left);
+	postOrder(bt->right);
+	printf("%c", bt->data);
+}
