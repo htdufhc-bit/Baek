@@ -1,0 +1,93 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct _quenode
+{
+	struct _quenode* next;
+	int data;
+} qNode;
+
+typedef struct _que
+{
+	qNode* head;
+	qNode* rear;
+} Que;
+
+void queInit(Que* pq);
+void enqueue(Que* pq, int data);
+int dequeue(Que* pq);
+void searchParent(Que* pq, int* arr, int curr);
+
+int main(void)
+{
+	int parent[100002] = { 0, };
+	Que* graph;
+	parent[1] = -1;
+	int node_num;
+	int first, second;
+	scanf("%d", &node_num);
+	graph = (Que*)malloc(sizeof(Que) * (node_num + 1));
+	for (int i = 1; i <= node_num; i++)
+	{
+		queInit(&graph[i]);
+	}
+	for (int i = 1; i < node_num; i++)
+	{
+		scanf("%d %d", &first, &second);
+		enqueue(&graph[first], second);
+		enqueue(&graph[second], first);
+	}
+
+	searchParent(graph, parent, 1);
+
+	for (int i = 2; i <= node_num; i++)
+	{
+		printf("%d\n", parent[i]);
+	}
+
+}
+
+void queInit(Que* pq)
+{
+	pq->head = NULL;
+	pq->rear = NULL;
+}
+void enqueue(Que* pq, int data)
+{
+	qNode* newNode = (qNode*)malloc(sizeof(qNode));
+	newNode->data = data;
+	newNode->next = NULL;
+
+	if (pq->head != NULL)
+		pq->rear->next = newNode;
+	else
+		pq->head = newNode;
+
+	pq->rear = newNode;
+}
+int dequeue(Que* pq)
+{
+	int delData = pq->head->data;
+	qNode* delNode = pq->head;
+
+	pq->head = pq->head->next;
+	if (pq->head == NULL)
+		pq->rear = NULL;
+
+	free(delNode);
+	return delData;
+}
+void searchParent(Que* pq, int* arr, int curr)
+{
+	int child;
+	while (pq[curr].head != NULL)
+	{
+		child = dequeue(&pq[curr]);
+		if (arr[child] == 0)
+		{
+			arr[child] = curr;
+			searchParent(pq, arr, child);
+		}
+	}
+}
