@@ -1,0 +1,101 @@
+#define _CRT_SECURE_NO_WARNINGS	
+#include <stdio.h>
+#include <stdlib.h>
+
+void upheap(long long* arr, int top);
+void downheap(long long* arr, int top, int idx);
+void sumheap(long long* arr, int top);
+
+
+int main(void)
+{
+	long long* card;															// 들어가는 데이터 크기 파악 후, long long 선언
+	int card_num, card_sum;
+	long long total = 0;
+
+
+	scanf("%d %d", &card_num, &card_sum);
+	card = (long long int*)malloc(sizeof(long long int) * (card_num + 1));		// 힙 배열 선언
+
+	for (int i = 1; i <= card_num; i++)
+	{
+		scanf("%lld", &card[i]);
+		upheap(card, i);
+
+	}
+	for (int i = 0; i < card_sum; i++)
+	{
+		sumheap(card, card_num);
+	}
+
+	for (int i = 1; i <= card_num; i++)
+	{
+		total += card[i];
+	}
+	printf("%lld", total);
+}
+
+
+void upheap(long long* arr, int top)											
+{																				
+	long long int num = arr[top];												
+	int curr = top;
+	while (curr > 1 && num < arr[curr / 2])										// curr의 최소 값은 루트 노드의 인덱스, num의 위치를 찾는 것이기에 비교 대상은 num
+	{
+		arr[curr] = arr[curr / 2];
+		curr = curr / 2;
+	}
+	arr[curr] = num;
+}
+
+void downheap(long long* arr, int top, int idx)
+{
+	long long int data = arr[idx];
+	int curr = idx;
+	int left, right, child;
+	while (1)
+	{
+		left = curr * 2;
+		right = curr * 2 + 1;
+		if (left > top)
+		{
+			break;
+		}
+
+		child = left;
+		if (right <= top && arr[child] > arr[right])
+		{
+			child = right;
+		}
+
+		if (data <= arr[child])													// data의 위치를 찾는 과정이기에 비교 대상은 data
+		{
+			break;
+		}
+
+		arr[curr] = arr[child];
+		curr = child;
+	}
+
+	arr[curr] = data;
+}
+void sumheap(long long* arr, int top)
+{
+	long long int sum;
+	if (top != 2 && arr[2] > arr[3])
+	{
+		sum = arr[1] + arr[3];
+		arr[1] = sum;
+		arr[3] = sum;
+		downheap(arr, top, 3);													// 힙 속성 복구를 위해서 루트 노드 밑에 노드부터 downheap 진행
+		downheap(arr, top, 1);
+	}
+	else
+	{
+		sum = arr[1] + arr[2];
+		arr[1] = sum;
+		arr[2] = sum;
+		downheap(arr, top, 2);													// 힙 속성 복구를 위해서 루트 노드 밑에 노드부터 downheap 진행
+		downheap(arr, top, 1);
+	}
+}
