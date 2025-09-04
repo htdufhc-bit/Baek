@@ -1,0 +1,87 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+
+void buildMaxHeap(int* arr, int heap_size);											// 최대 힙 관련 함수
+void down_Maxheap(int* arr, int heap_idx, int heap_size);
+
+int main(void)
+{
+	int giant_population, centi_height, magic_limit, magic_count, success;			// 거인 인구 수, 센티의 키, 마법의 횟수 제한, 마법 총 횟수, 성공 여부를 위한 변수 선언
+	int* giant_height;																// 거인들 키 배열을 가리킬 포인터
+	magic_count = 0;																// 마법 총 횟수와 성공 여부 0으로 초기화
+	success = 0;
+
+	scanf("%d %d %d", &giant_population, &centi_height, &magic_limit);				// 필요한 정보들 입력
+	giant_height = (int*)malloc(sizeof(int) * (giant_population + 1));				// 거인 인구 수에 맞게 배열 메모리 할당
+
+	for (int i = 1; i <= giant_population; i++)										// 거인 키 입력
+	{
+		scanf("%d", &giant_height[i]);
+	}
+
+	buildMaxHeap(giant_height, giant_population);									// 거인 키 바탕으로 최대힙 정렬
+	for (magic_count = 0; magic_count < magic_limit; magic_count++)					// 키 작아지는 마법 횟수 반복
+	{
+		if (giant_height[1] < centi_height)											// 모든 거인들의 키가 센티의 키보다 작다면, 성공으로 간주하고 반복문 종료
+		{
+			success = 1;
+			break;
+		}
+		else if (giant_height[1] == 1)												// 거인들의 키가 최소 키인 1이 되었다면, 종료
+		{
+			break;
+		}
+		giant_height[1] = giant_height[1] / 2;										// 제일 큰 거인의 키 1/2
+		down_Maxheap(giant_height, 1, giant_population);							// 다시 최대 힙 정렬
+	}
+	if (giant_height[1] < centi_height)												// 루프 종료 후, 한 번 더 확인
+	{
+		success = 1;
+	}
+	if (success == 1)																// 성공했다면, YES 출력 및 마법 횟수 출력
+	{
+		printf("YES\n%d", magic_count);
+	}
+	else																			// 실패했다면, NO 출력 및 제일 큰 거인의 키 출력
+	{
+		printf("NO\n%d", giant_height[1]);
+	}
+}
+void buildMaxHeap(int* arr, int heap_size)											// 최대 힙 정렬
+{
+	for (int i = heap_size / 2; i > 0; i--)											// 리프 노드 제외한 노드들 돌아가며 힙 속성 복구
+	{
+		down_Maxheap(arr, i, heap_size);
+	}
+}
+void down_Maxheap(int* arr, int heap_idx, int heap_size)							// 아래로 내려가며 최대 힙 속성 복구
+{
+	int curr = heap_idx;															// 현재 인덱스와 그 인덱스에 해당하는 키값 저장
+	int data = arr[heap_idx];
+
+	while (1)																		// upheap 알고리즘
+	{
+		int left, right;															
+		left = curr * 2;
+		right = curr * 2 + 1;
+		if (left > heap_size)
+		{
+			break;
+		}
+		int child = left;
+		if (right <= heap_size && arr[right] > arr[child])
+		{
+			child = right;
+		}
+		if (data >= arr[child])
+		{
+			break;
+		}
+
+		arr[curr] = arr[child];
+		curr = child;
+	}
+
+	arr[curr] = data;
+}
